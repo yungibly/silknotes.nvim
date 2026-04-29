@@ -37,7 +37,7 @@ local function sanitize_title(title)
   local out = {}
   for _, p in ipairs(parts) do
     local s = sanitize_part(p)
-    if s ~= "" then
+    if s ~= "" and s ~= ".." and s ~= "." then
       table.insert(out, s)
     end
   end
@@ -66,6 +66,13 @@ function M.note(title)
   end
 
   local full_path = M.config.notes_dir .. "/" .. sanitized .. ".md"
+
+  local resolved = vim.fn.resolve(vim.fn.fnamemodify(full_path, ":p"))
+  local vault    = vim.fn.resolve(vim.fn.fnamemodify(M.config.notes_dir, ":p"))
+  if resolved:sub(1, #vault) ~= vault then
+    vim.notify("silknotes: path escapes the vault, aborting.", vim.log.levels.ERROR)
+    return
+  end
 
   ensure_dir(vim.fn.fnamemodify(full_path, ":h"))
 
@@ -99,3 +106,4 @@ function M.complete_today(arg_lead)
 end
 
 return M
+
