@@ -50,7 +50,14 @@ end
 
 function M.note(title)
   if not title or vim.trim(title) == "" then
-    title = vim.fn.input("Note title: ")
+    _G._silknotes_complete = function(arg_lead)
+      return M.complete(arg_lead)
+    end
+    title = vim.fn.input({
+      prompt     = "Note title: ",
+      completion = "customlist,v:lua._silknotes_complete",
+    })
+    _G._silknotes_complete = nil
     if vim.trim(title) == "" then
       vim.notify("silknotes: aborted.", vim.log.levels.WARN)
       return
@@ -58,6 +65,12 @@ function M.note(title)
   end
 
   title = title:gsub("%.md$", "")
+
+  local literal_path = M.config.notes_dir .. "/" .. title .. ".md"
+  if vim.fn.filereadable(literal_path) == 1 then
+    open_file(literal_path)
+    return
+  end
 
   local sanitized = sanitize_title(title)
   if sanitized == "" then
@@ -106,4 +119,3 @@ function M.complete_today(arg_lead)
 end
 
 return M
-
